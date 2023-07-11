@@ -79,6 +79,9 @@ SLAM_TER = merge(
 SLAM_TER$nb_days = as.numeric(SLAM_TER$Sampling.Date - SLAM_TER$Placement)
 SLAM_TER = SLAM_TER[SLAM_TER$nb_days %in% c(70:110),]
 
+## Remove lepidoptera (MF19 and 116)
+SLAM_TER = SLAM_TER %>% filter(order != "Lepidoptera")
+
 
 ## Compute Mat com
 Mat_com = SLAM_TER %>%
@@ -170,6 +173,8 @@ Mat_com_dominant = select(
 
 ## Save training dataset
 Mat_com_dominant$time_step = row.names(Mat_com_dominant)
+Mat_com_dominant$time_step = as.numeric(Mat_com_dominant$time_step)
+Mat_com_dominant = Mat_com_dominant %>% filter(time_step >= 9) %>% filter(time_step < 47)
 
 write.table(
     Mat_com_dominant,
