@@ -12,6 +12,7 @@ Pkg.instantiate()
 # Pkg.add("ProgressMeter")
 # Pkg.add("JLD2")
 # Pkg.add("Distances")
+# Pkg.add("LinearAlgebra")
 
 ## Loading Packages
 using Flux, Statistics, Distances
@@ -20,6 +21,7 @@ using Plots
 using ProgressMeter
 using Flux: train!
 using JLD2
+using LinearAlgebra
 
 function forecast_model(
     dataset::DataFrame,
@@ -100,7 +102,7 @@ function forecast_model(
     end
 
     @info("Training ended")
-    plot(trainingloss)
+    # plot(trainingloss)
 
     ## Saving model
     model_state = Flux.state(model)
@@ -138,21 +140,24 @@ function forecast_model(
     sort!(accuracy_table, order(:time_step, rev = false))
 
 
-    eucli_dist = []
+    accuracy_list = []
     for col in 1:ncol(accuracy_table)
+        scalar_product = dot(test_data[:,col], accuracy_table[:,col])
+
+        cos_angle = scalar_product / (norm(test_data[:,col]) * norm(accuracy_table[:,col]))
+
+        accuracy = 1-(cos_angle * (abs(norm(accuracy_table[:,col]) - norm(test_data[:,col])))/((norm(accuracy_table[:,col]) + norm(test_data[:,col]))))
+        
         append!(
-            eucli_dist,
-            euclidean(
-                float.(accuracy_table[:,col]),
-                float.(test_data[:,col])
-            )
+            accuracy_list,
+            accuracy
         )
     end
 
     accuracy_result = DataFrame(
-        euclidian_distance = eucli_dist,
+        model_accuracy = accuracy_list,
         MF = names(accuracy_table)
     )
 
-    output, accuracy_result, mean(accuracy_result.euclidian_distance), trainingloss
+    output, accuracy_result, mean(accuracy_result.model_accuracy), trainingloss
 end
