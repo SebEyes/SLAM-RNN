@@ -182,18 +182,3 @@ write.table(
     sep = ";",
     row.names = F
 )
-
-## PCA
-# res.PCA<-PCA(Mat_com_dominant,graph=FALSE)
-# res.PCA$ind$coord
-
-# ## Save training dataset
-# data_NN = as.data.frame(res.PCA$ind$coord)
-# data_NN$time_step = row.names(data_NN)
-
-# write.table(
-#     data_NN,
-#     "data/data_NN.csv",
-#     sep = ";",
-#     row.names = F
-# )

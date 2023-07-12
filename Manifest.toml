@@ -2,7 +2,7 @@
 
 julia_version = "1.9.2"
 manifest_format = "2.0"
-project_hash = "6b0fb9c43826c00a85efdf9871a7f729377b6b4a"
+project_hash = "ed738072ecb089dc4db52f028e8aed6ec074f3d0"
 
 [[deps.ARFFFiles]]
 deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
@@ -1309,6 +1309,12 @@ deps = ["Dates", "Grisu"]
 git-tree-sha1 = "91eddf657aca81df9ae6ceb20b959ae5653ad1de"
 uuid = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 version = "1.0.3"
+
+[[deps.Shuffle]]
+deps = ["Random"]
+git-tree-sha1 = "b812fb30d6d8b295b71dd5a4102d1ae7b60698e3"
+uuid = "bf21e494-c40e-4daa-abfb-de5ec0aad010"
+version = "0.1.1"
 
 [[deps.SimpleBufferStream]]
 git-tree-sha1 = "874e8867b33a00e784c8a7e4b60afe9e037b74e1"

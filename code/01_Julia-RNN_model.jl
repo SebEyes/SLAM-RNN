@@ -13,6 +13,7 @@ Pkg.instantiate()
 # Pkg.add("JLD2")
 # Pkg.add("Distances")
 # Pkg.add("LinearAlgebra")
+# Pkg.add("Shuffle")
 
 ## Loading Packages
 using Flux, Statistics, Distances
@@ -22,42 +23,34 @@ using ProgressMeter
 using Flux: train!
 using JLD2
 using LinearAlgebra
+using Shuffle
 
 function forecast_model(
     dataset::DataFrame,
     epoch_number::Int,
     model_version::String,
-    number_prediction::Int
+    number_prediction::Int,
+    sorted_data::Bool
 )
 
     model_name = "RNN_$(model_version)"
 
     ### Define train and test dataset  
-    function partitionTrainTest(data::DataFrame, at = 0.75)
+    function partitionTrainTest(data::DataFrame, sorted_data::Bool, at = 0.75)
         n = nrow(data)
-        idx = 1:n
+        if sorted_data
+            @info("Using sorted time step")
+            idx = 1:n
+        else
+            @info("Shuffling time step")
+            idx = shuffle(1:n)
+        end
         train_idx = view(idx, 1:floor(Int, at*n))
         test_idx = view(idx, (floor(Int, at*n)+1):n)
         data[train_idx,:], data[test_idx,:]
     end
 
-    train_data, test_data = partitionTrainTest(dataset);
-
-    sort!(
-        train_data,
-        order(
-            :time_step,
-            rev = false
-        )
-    )
-
-    sort!(
-        test_data,
-        order(
-            :time_step,
-            rev = false
-        )
-    )
+    train_data, test_data = partitionTrainTest(dataset, sorted_data);
 
     nsamples = nrow(train_data)
 
@@ -148,6 +141,10 @@ function forecast_model(
 
         accuracy = 1-(cos_angle * (abs(norm(accuracy_table[:,col]) - norm(test_data[:,col])))/((norm(accuracy_table[:,col]) + norm(test_data[:,col]))))
         
+        if isnan(accuracy)
+            accuracy = 0
+        end
+
         append!(
             accuracy_list,
             accuracy
