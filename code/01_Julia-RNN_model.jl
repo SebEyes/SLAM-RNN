@@ -97,9 +97,9 @@ function forecast_model(
     @info("Training ended")
     # plot(trainingloss)
 
-    ## Saving model
-    model_state = Flux.state(model)
-    jldsave("code/model/$(model_name).jld2"; model_state)
+    # ## Saving model
+    # model_state = Flux.state(model)
+    # jldsave("code/model/$(model_name).jld2"; model_state)
 
     ### output
     time_step = vec([x_train x_test])
@@ -156,5 +156,5 @@ function forecast_model(
         MF = names(accuracy_table)
     )
 
-    output, accuracy_result, mean(accuracy_result.model_accuracy), trainingloss
+    model, output, accuracy_result, mean(accuracy_result.model_accuracy), trainingloss
 end

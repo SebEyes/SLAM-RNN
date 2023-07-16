@@ -16,7 +16,7 @@ diversity_data = CSV.File(
 name_model_list = ["V6_shuffle", "V6_sorted"]
 epoch_number_list = [50000, 50000]
 sorted = [false, true]
-number_runs = 500
+number_runs = 500 #one run is between 1 and 2 hours
 
 accuracy_model = []
 
@@ -27,7 +27,7 @@ for run in 1:number_runs
         epoch_number = epoch_number_list[model_number]
         sorted_data = sorted[model_number]
 
-        output_model, all_accuracy, mean_accuracy, loss_model = forecast_model(
+        _, output_model, all_accuracy, mean_accuracy, loss_model = forecast_model(
         diversity_data, 
         epoch_number,
         model_version,

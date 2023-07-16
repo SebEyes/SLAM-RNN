@@ -17,7 +17,7 @@ accuracy_model = []
     model_version = name_model_list[model_number]
     epoch_number = epoch_number_list[model_number]
 
-    output_model, all_accuracy, mean_accuracy, loss_model = forecast_model(
+    _, output_model, all_accuracy, mean_accuracy, loss_model = forecast_model(
     diversity_data, 
     epoch_number,
     model_version,
