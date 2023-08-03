@@ -12,14 +12,14 @@ diversity_data = CSV.File(
     delim = ";"
 ) |> DataFrame
 
-function scenario_S0(number_runs::Int64)
+function scenario_S0(number_runs::Int64, epochs::Int64)
     accuracy_model = [0.0]
 
     for run in 1:number_runs
         @info("Run number $run/$number_runs")
         model, output_model, all_accuracy, mean_accuracy, loss_model = forecast_model(
             diversity_data, 
-            10_000, #between 30-60 of computation
+            epochs,
             "V6_best",
             0, #No prediction
             true #using sorted data
