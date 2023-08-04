@@ -2,8 +2,7 @@
 include("01_Julia-RNN_model.jl")
 
 ####
-## This script allow to save the model with the best accuracy after 20 trainings of the V6
-## Require between 12 to 24 hours to run
+## This script allow to save the model with the best accuracy after trainings of the V6
 ####
 
 ### Import data
@@ -27,7 +26,7 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
         @info ("Mean Accuracy = $mean_accuracy")
         
 
-        if mean_accuracy > last(accuracy_model) #if the new model has a better accuracy than the last one
+        if mean_accuracy > maximum(accuracy_model) #if the new model has a better accuracy
         ## Saving model
             model_state = Flux.state(model)
             jldsave("data/results_scenario/S0[best_model_selection]/V6_best.jld2"; 
