@@ -8,20 +8,40 @@ diversity_data = CSV.File(
 ) |> DataFrame
 
 function scenario_S2(frame::Int64, epochs::Int64)
-    epoch_number_list = [epochs, epochs]
-
-    number_runs = nrows(diversity_data) / frame ### Ajouter floor
 
     accuracy_model = []
+    list_windows_start = []
+    list_windows_end = []
 
-    for run in 1:number_runs
-        @info("Run number $run/$number_runs")
+    starting_row = 1
+    ending_row = convert(Int64, starting_row + frame*2-1)
+
+    max_row = nrow(diversity_data)
+
+    while ending_row < max_row
+
+        @info("Data from row $starting_row to $ending_row (maximum $max_row rows)")
+        
+        data_selected = diversity_data[starting_row:ending_row, :]
+
+        append!(list_windows_start, starting_row)
+        append!(list_windows_end, ending_row)
+
+        ending_row = ending_row + 1
+
+        starting_row = starting_row + 1
+        
+        idx = 1:frame*2
+
         model, output_model, all_accuracy, mean_accuracy, loss_model = forecast_model(
-            diversity_data, 
+            data_selected, 
             epochs,
             "V6_best",
             0, #No prediction
-            true #using sorted data
+            true,#using sorted data
+            true, #force the use of a training and test dataset
+            view(idx, 1:floor(Int, frame)), #Row to use for the training
+            view(idx, (floor(Int, frame)+1):frame*2) #Rows to use for the test
             )
         @info ("Mean Accuracy = $mean_accuracy")
         append!(accuracy_model,mean_accuracy)
@@ -29,10 +49,12 @@ function scenario_S2(frame::Int64, epochs::Int64)
     end
 
     model_comparison = DataFrame(
-        model_name = repeat(name_model_list,number_runs),
-        epoch_number = repeat(epoch_number_list,number_runs),
+        training_frame = string(frame),
+        windows_start = list_windows_start,
+        windows_end = list_windows_end,
+        epoch_number = string(epochs),
         mean_accuracy = accuracy_model
     )
 
-    CSV.write("data/results_scenario/S1[temporal_autocorrelation]/comparison_temporal autocorrelation.csv", model_comparison)
+    CSV.write("data/results_scenario/S2[training_frame]/windows_$frame.csv", model_comparison)
 end

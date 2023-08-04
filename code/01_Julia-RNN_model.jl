@@ -1,8 +1,3 @@
-### Environment gestion
-using Pkg
-Pkg.activate(".")
-Pkg.instantiate()
-
 ## Package installation
 # Pkg.add("Flux")
 # Pkg.add("Statistics")
@@ -25,32 +20,41 @@ using JLD2
 using LinearAlgebra
 using Shuffle
 
+### Define train and test dataset  
+function partitionTrainTest(data::DataFrame, sorted_data::Bool, at = 0.75)
+    n = nrow(data)
+    if sorted_data
+        @info("Using sorted time step")
+        idx = 1:n
+    else
+        @info("Shuffling time step")
+        idx = shuffle(1:n)
+    end
+    train_idx = view(idx, 1:floor(Int, at*n))
+    test_idx = view(idx, (floor(Int, at*n)+1):n)
+    @info("Using $train_idx train data and $test_idx test data")
+    data[train_idx,:], data[test_idx,:]
+end
+
 function forecast_model(
     dataset::DataFrame,
     epoch_number::Int,
     model_version::String,
     number_prediction::Int,
-    sorted_data::Bool
+    sorted_data::Bool,
+    force_dataset::Bool,
+    train_idx,
+    test_idx
 )
 
     model_name = "RNN_$(model_version)"
 
-    ### Define train and test dataset  
-    function partitionTrainTest(data::DataFrame, sorted_data::Bool, at = 0.75)
-        n = nrow(data)
-        if sorted_data
-            @info("Using sorted time step")
-            idx = 1:n
-        else
-            @info("Shuffling time step")
-            idx = shuffle(1:n)
-        end
-        train_idx = view(idx, 1:floor(Int, at*n))
-        test_idx = view(idx, (floor(Int, at*n)+1):n)
-        data[train_idx,:], data[test_idx,:]
+    if force_dataset
+        @info("Using $train_idx train data and $test_idx test data")
+        train_data, test_data = dataset[train_idx,:], dataset[test_idx,:]
+    else
+        train_data, test_data = partitionTrainTest(dataset, sorted_data);
     end
-
-    train_data, test_data = partitionTrainTest(dataset, sorted_data);
 
     nsamples = nrow(train_data)
 

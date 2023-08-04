@@ -31,7 +31,10 @@ function scenario_S1(number_runs::Int64, epochs::Int64)
                 epoch_number,
                 model_version,
                 8,
-                sorted_data
+                sorted_data,
+                false,
+                0,
+                0
             )
 
             @info ("Mean Accuracy = $mean_accuracy")

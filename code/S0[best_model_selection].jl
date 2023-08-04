@@ -21,7 +21,10 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
             epochs,
             "V6_best",
             0, #No prediction
-            true #using sorted data
+            true, #using sorted data
+            false,
+            0,
+            0 #Use normal splitting of data for training and test
             )
         @info ("Mean Accuracy = $mean_accuracy")
         
