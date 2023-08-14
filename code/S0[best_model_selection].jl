@@ -1,6 +1,9 @@
 ### Load model
 include("01_Julia-RNN_model.jl")
 
+### Packages
+using BSON
+
 ####
 ## This script allow to save the model with the best accuracy after trainings of the V6
 ####
@@ -31,9 +34,17 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
 
         if mean_accuracy > maximum(accuracy_model) #if the new model has a better accuracy
         ## Saving model
-            model_state = Flux.state(model)
-            jldsave("data/results_scenario/S0[best_model_selection]/V6_best.jld2"; 
-            model_state)
+            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V6_best.bson" model
+
+            # model_state = Flux.state(model)
+            # jldsave("data/results_scenario/S0[best_model_selection]/test_saving.jld2"; model_state)
+            
+        ## Saving species accuracy
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV6_best_species_accuracy.csv", all_accuracy)
+        
+        ## Saving output_model
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV6_best_output_model.csv", output_model)
+
             @info ("Saving Model")
         end
 

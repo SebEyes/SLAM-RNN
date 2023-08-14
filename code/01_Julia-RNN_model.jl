@@ -5,7 +5,6 @@
 # Pkg.add("DataFrames")
 # Pkg.add("Plots")
 # Pkg.add("ProgressMeter")
-# Pkg.add("JLD2")
 # Pkg.add("Distances")
 # Pkg.add("LinearAlgebra")
 # Pkg.add("Shuffle")
@@ -16,7 +15,6 @@ using CSV, DataFrames
 using Plots
 using ProgressMeter
 using Flux: train!
-using JLD2
 using LinearAlgebra
 using Shuffle
 
@@ -101,10 +99,6 @@ function forecast_model(
     @info("Training ended")
     # plot(trainingloss)
 
-    # ## Saving model
-    # model_state = Flux.state(model)
-    # jldsave("code/model/$(model_name).jld2"; model_state)
-
     ### output
     time_step = vec([x_train x_test])
     time_step_prediction = last(time_step, number_prediction) .+ number_prediction
@@ -160,5 +154,5 @@ function forecast_model(
         MF = names(accuracy_table)
     )
 
-    model, output, accuracy_result, mean(accuracy_result.model_accuracy), trainingloss
+    model, output, accuracy_result, mean(accuracy_result.model_accuracy[1:38,:]), trainingloss
 end

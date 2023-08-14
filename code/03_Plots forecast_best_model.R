@@ -8,20 +8,17 @@ require(ggplot2)
 ### Load data
 # Output model
 res_RNN = read.csv(
-    "data/result_model_V5_100000.csv"
+    "data/results_scenario/S0[best_model_selection]/modelV6_best_output_model.csv"
 )
 names(res_RNN) = str_remove_all(names(res_RNN), "X")
 res_RNN$data_source = "model prediction"
 
 # Real data
 real_data = read.csv(
-    "data/Matrix_dominant.csv"
+    "data/Matrix_dominant.csv",
+    sep = ";"
 )
 names(real_data) = str_remove_all(names(real_data), "X")
-real_data = select(
-    real_data,
-    -c("19", "116")
-)
 real_data$data_source = "real data"
 
 ### Plot
@@ -51,7 +48,7 @@ facet_wrap(
 )
 
 # ggsave(
-#     "docs/ModelV5_100000_prediction.jpg",
+#     "docs/ModelV6_best_prediction.jpg",
 #     width = 20,
 #     height = 20
 # )
