@@ -21,17 +21,22 @@ using Shuffle
 ### Define train and test dataset  
 function partitionTrainTest(data::DataFrame, sorted_data::Bool, at = 0.75)
     n = nrow(data)
-    if sorted_data
-        @info("Using sorted time step")
-        idx = 1:n
-    else
-        @info("Shuffling time step")
-        idx = shuffle(1:n)
-    end
+    idx = 1:n
     train_idx = view(idx, 1:floor(Int, at*n))
     test_idx = view(idx, (floor(Int, at*n)+1):n)
+    if sorted_data
+        @info("Using sorted time step")
+        train_dataset = data[train_idx,:]
+        test_dataset = data[test_idx,:]
+    else
+        @info("Shuffling time step")
+        idx = shuffle(1:floor(Int, at*n))
+        train_idx = view(idx, 1:floor(Int, at*n))
+        train_dataset = data[train_idx,:]
+        test_dataset = data[test_idx,:]
+    end
     @info("Using $train_idx train data and $test_idx test data")
-    data[train_idx,:], data[test_idx,:]
+    train_dataset, test_dataset
 end
 
 function forecast_model(
