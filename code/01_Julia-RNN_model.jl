@@ -133,11 +133,13 @@ function forecast_model(
 
     accuracy_list = []
     for col in 1:ncol(accuracy_table)
-        scalar_product = dot(test_data[:,col], accuracy_table[:,col])
+        test_true = convert.(Float64, test_data[:,col])
+        test_model = convert.(Float64, accuracy_table[:,col])
+        scalar_product = dot(test_true, test_model)
 
-        cos_angle = scalar_product / (norm(test_data[:,col]) * norm(accuracy_table[:,col]))
+        cos_angle = (scalar_product / (norm(test_true) * norm(test_model)))
 
-        accuracy = 1-(cos_angle * (abs(norm(accuracy_table[:,col]) - norm(test_data[:,col])))/((norm(accuracy_table[:,col]) + norm(test_data[:,col]))))
+        accuracy = cos_angle * (1-((abs(norm(test_model) - norm(test_true)))/((norm(test_model) + norm(test_true)))))
         
         if isnan(accuracy)
             accuracy = 0

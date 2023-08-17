@@ -47,8 +47,8 @@ facet_wrap(
     scales= "free_y"
 )
 
-# ggsave(
-#     "docs/ModelV6_best_prediction.jpg",
-#     width = 20,
-#     height = 20
-# )
+ggsave(
+    "docs/ModelV6_best_prediction.jpg",
+    width = 20,
+    height = 20
+)
