@@ -49,12 +49,12 @@ labs(
 
 BoxPlot_accurracy
 
-ggsave(
-    "docs/Accuracy_Model_V6.jpg",
-    width = 4,
-    height = 5,
-    units = "in"
-)
+# ggsave(
+#     "docs/Accuracy_Model_V6.jpg",
+#     width = 4,
+#     height = 5,
+#     units = "in"
+# )
 
 ## Dispersion statistics
 summary(acc_model$mean_accuracy)
@@ -133,8 +133,39 @@ facet_wrap(
     color = "Data source:"
 )
 
-ggsave(
-    "docs/ModelV6_best_prediction.jpg",
-    width = 20,
-    height = 20
+# ggsave(
+#     "docs/ModelV6_best_prediction.jpg",
+#     width = 20,
+#     height = 20
+# )
+
+#####
+## Comparative accurracy model V6 with 50_000 epochs training (output S1)
+#####
+
+### Load data
+# Accuracy tables
+comp_acc = read.csv(
+    "data/results_scenario/S1[temporal_autocorrelation]/comparison_temporal autocorrelation.csv"
+)
+comp_acc$mean_accuracy = 100*comp_acc$mean_accuracy
+ggplot(
+    data = comp_acc,
+    aes(
+        x = model_name,
+        y = mean_accuracy,
+        fill = model_name
+    )
+) + 
+scale_y_continuous(
+    limits = c(0, 100)
+)+
+geom_boxplot() +
+theme(
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank()
+)+
+labs(
+    y = "Mean accurracy (%)",
+    fill = "Model type:"
 )
