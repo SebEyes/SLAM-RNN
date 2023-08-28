@@ -17,6 +17,15 @@ using ProgressMeter
 using Flux: train!
 using LinearAlgebra
 using Shuffle
+using Distributed
+
+### Parallel computing
+if nprocs() > 3
+    addprocs(2)
+end
+CPU_unit = nprocs()
+@info("Using $CPU_unit CPU units")
+
 
 ### Define train and test dataset  
 function partitionTrainTest(data::DataFrame, sorted_data::Bool, at = 0.75)
@@ -32,7 +41,9 @@ function partitionTrainTest(data::DataFrame, sorted_data::Bool, at = 0.75)
         @info("Shuffling time step")
         idx = shuffle(1:floor(Int, at*n))
         train_idx = view(idx, 1:floor(Int, at*n))
+
         train_dataset = data[train_idx,:]
+        train_dataset.time_step = sort(train_dataset.time_step);
         test_dataset = data[test_idx,:]
     end
     @info("Using $train_idx train data and $test_idx test data")

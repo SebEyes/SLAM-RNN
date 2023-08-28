@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.2"
+julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "aa69381a4820e5f198ec3a09f6501dafeb0867c7"
+project_hash = "9f8ef198e31d70eaedf55566e3dd0b2d3167898c"
 
 [[deps.ARFFFiles]]
 deps = ["CategoricalArrays", "Dates", "Parsers", "Tables"]
