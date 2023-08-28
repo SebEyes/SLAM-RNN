@@ -20,7 +20,7 @@ using Shuffle
 using Distributed
 
 ### Parallel computing
-if nprocs() > 3
+if nprocs() < 3
     addprocs(2)
 end
 CPU_unit = nprocs()
