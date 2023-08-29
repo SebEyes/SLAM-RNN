@@ -62,8 +62,7 @@ end
 ### Model V7
 function VIVALDAI_model(
     dataset::DataFrame,
-    epoch_number::Int,
-    number_prediction::Int
+    epoch_number::Int
 )
     #Reduce precision to imrpove computation time
     dataset = convert.(Int16,dataset)
