@@ -40,30 +40,62 @@ function partitionTrainTest(data::DataFrame, at = 0.75)
     train_dataset, test_dataset
 end
 
+### Define a function to format the input data for the model
+function Input_format(input_data)
+    input_DataX = []
+    input_DataY = []
+    for seasons in 1:size(input_data)[1]-batch_size
+        append!(
+            input_DataX,
+            [input_data[seasons] ; input_data[seasons+1] ; input_data[seasons+2] ; input_data[seasons+3]]
+        )
+        append!(
+            input_DataY,
+            input_data[seasons+3]
+        )
+    end
+    input_DataX = reshape(input_DataX, in_features, size(input_data)[1]-batch_size)
+    input_DataY = reshape(input_DataY, out_features, size(input_data)[1]-batch_size)
+    input_DataX, input_DataY
+end
+
+### Model V7
 function VIVALDAI_model(
     dataset::DataFrame,
     epoch_number::Int,
     number_prediction::Int
 )
-    #REduce precision to imrpove computation time
+    #Reduce precision to imrpove computation time
     dataset = convert.(Int16,dataset)
 
     train_data, test_data = partitionTrainTest(dataset)
 
-    in_features = ncol(dataset) #number of species
-
     batch_size = 4 #4 seasons
+
+    in_features = ncol(dataset) * batch_size #Flattened vector of 38 species over 4 seasons
 
     out_features = ncol(dataset) #number of species
 
-    x_train = permutedims(Matrix(train_data))
+    train_data = Matrix(train_data)
+    train_data = [train_data[season,:] for season in 1:size(train_data)[1]]
 
-    x_train = permutedims(hcat(Matrix(train_data)[:,in_features + out_features]))
-    x_test = permutedims(hcat(Matrix(test_data)[:,in_features + out_features]))
+    test_data = Matrix(test_data)
+    test_data = [test_data[season,:] for season in 1:size(test_data)[1]]
 
-    y_train = permutedims(hcat(Matrix(train_data)[:,1:out_features]))
+    X_dataTrain, Y_dataTrain = Input_format(train_data)
+    X_dataTrain = convert.(Int16, X_dataTrain)
+    Y_dataTrain = convert.(Int16, Y_dataTrain)
 
-    data_train = Flux.Data.DataLoader((x_train,y_train))
+    X_dataTest, Y_dataTest = Input_format(test_data)
+    X_dataTest = convert.(Int16, X_dataTest)
+    Y_dataTest = convert.(Int16, Y_dataTest)
+
+    Y_dataTest = permutedims(Y_dataTest)
+    Y_dataTest = DataFrame(Y_dataTest, :auto)
+    rename!(Y_dataTest, names(dataset))
+
+
+    data_train = Flux.Data.DataLoader((X_dataTrain, Y_dataTrain))
 
     ## Model architecture
     Nnrns = 100 #Number of neurons in the hidden layer
@@ -90,48 +122,49 @@ function VIVALDAI_model(
     X1, Y1 = first(data_train)
 
     @showprogress for epoch in 1:epoch_number
-        Flux.train!(loss,ps,data_train,opt)
-        append!(trainingloss, loss(X1, Y1)) # Compute loss on the first data
+        Flux.train!(
+            loss, # Loss function
+            ps, #parameters
+            data_train, #training data
+            opt # Optimiser
+        )
+        # append!(trainingloss, loss(model_out, true_value)) # Compute loss on the first data
     end
-
     @info("Training ended")
     # plot(trainingloss)
 
     ### output
-    time_step = vec([x_train x_test])
-    time_step_prediction = last(time_step, number_prediction) .+ number_prediction
-    time_step = vcat(time_step, time_step_prediction)
-    
     prediction = []
-    for value in time_step
+    for four_seasons in 1:size(X_dataTrain)[2]
         # println(value)
-        value = [value]
-        append!(prediction, model(value))
+        year_data = X_dataTrain[:,four_seasons]
+        append!(prediction, model(year_data))
     end
 
-    output = DataFrame(reshape(prediction,(out_features, size(time_step,1))),:auto)
+    output = reshape(prediction, (out_features, size(X_dataTrain)[2]))
+
+    output = DataFrame(output,:auto)
     output = permutedims(output)
-    output.time_step = vec(time_step)
-    rename!(output, names(diversity_data))
+    rename!(output, names(dataset))
 
 
-    ### Accuracy computation (euclidean distance)
+    ### Accuracy computation
     accuracy = []
-    for value in x_test
-        value = [value]
-        append!(accuracy, model(value))
+    for four_seasons in 1:size(X_dataTest)[2]
+        year_data = X_dataTrain[:,four_seasons]
+        append!(accuracy, model(year_data))
     end
 
-    accuracy_table = DataFrame(reshape(accuracy,(out_features,size(x_test,2))),:auto)
+    accuracy_table = reshape(accuracy, (out_features, size(X_dataTest)[2]))
+
+    accuracy_table = DataFrame(accuracy_table,:auto)
     accuracy_table = permutedims(accuracy_table)
-    accuracy_table.time_step = vec(x_test)
-    rename!(accuracy_table, names(diversity_data))
-    sort!(accuracy_table, order(:time_step, rev = false))
+    rename!(accuracy_table, names(dataset))
 
 
     accuracy_list = []
     for col in 1:ncol(accuracy_table)
-        test_true = convert.(Float64, test_data[:,col])
+        test_true = convert.(Float64, Y_dataTest[:,col])
         test_model = convert.(Float64, accuracy_table[:,col])
         scalar_product = dot(test_true, test_model)
 
