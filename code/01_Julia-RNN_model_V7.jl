@@ -40,7 +40,7 @@ function partitionTrainTest(data::DataFrame, at = 0.75)
 end
 
 ### Define a function to format the input data for the model
-function Input_format(input_data, yearly::Bool)
+function Input_format(input_data, yearly::Bool, out_features = 38)
     input_DataX = []
     input_DataY = []
     if yearly
@@ -70,7 +70,7 @@ function Input_format(input_data, yearly::Bool)
             )
         end
     end
-    input_DataX = reshape(input_DataX, in_features*batch_size, size(input_data)[1]-batch_size)
+    input_DataX = reshape(input_DataX, out_features*batch_size, size(input_data)[1]-batch_size)
     input_DataY = reshape(input_DataY, out_features, size(input_data)[1]-batch_size)
     input_DataX, input_DataY
 end
@@ -115,7 +115,7 @@ function VIVALDAI_model(
     rename!(Y_dataTest, names(dataset))
 
 
-    data_train = Flux.Data.DataLoader((X_dataTrain, Y_dataTrain), batchsize = 1, buffer = true)
+    data_train = Flux.Data.DataLoader((X_dataTrain, Y_dataTrain))
 
     ## Model architecture
     Nnrns = 100 #Number of neurons in the hidden layer
@@ -123,11 +123,13 @@ function VIVALDAI_model(
     model = Chain(
         LSTM(in_features, Nnrns),
         LSTM(Nnrns, Nnrns),
-        Dense(Nnrns, out_features, relu),
+        LSTM(Nnrns => 50),
+        Dense(50 => 50, relu),
+        Dense(50, out_features, relu)
     )
 
     # Define a loss function(here: mean squared error)
-    loss(x, y) = Flux.mse(model(x),y)
+    loss(x, y) = Flux.msle(model(x),y)
 
     # Keep track of parameters for update
     ps = Flux.params(model);
@@ -153,14 +155,16 @@ function VIVALDAI_model(
     # plot(trainingloss)
 
     ### output
+    Xdata = [X_dataTrain X_dataTest]
+
     prediction = []
-    for four_seasons in 1:size(X_dataTrain)[2]
+    for four_seasons in 1:size(Xdata)[2]
         # println(value)
-        year_data = X_dataTrain[:,four_seasons]
+        year_data = Xdata[:,four_seasons]
         append!(prediction, model(year_data))
     end
 
-    output = reshape(prediction, (out_features, size(X_dataTrain)[2]))
+    output = reshape(prediction, (out_features, size(Xdata)[2]))
 
     output = DataFrame(output,:auto)
     output = permutedims(output)
@@ -208,3 +212,14 @@ function VIVALDAI_model(
 
     model, output, accuracy_result, mean(accuracy_result.model_accuracy[1:38,:]), trainingloss
 end
+
+model, output, accuracy_result, mean_accuracy, trainingloss = VIVALDAI_model(
+    select(diversity_data, Not(:time_step)), 
+    100_000, 
+    false
+)
+using BSON
+
+BSON.@save "data/results_scenario/S0[best_model_selection]/model_V7_VIVALDAI.bson" model
+CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_output.csv", output)
+CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_speciesAcc.csv", accuracy_result)
