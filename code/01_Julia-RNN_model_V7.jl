@@ -12,7 +12,6 @@
 ## Loading Packages
 using Flux, Statistics, Distances
 using CSV, DataFrames
-using Plots
 using ProgressMeter
 using Flux: train!
 using LinearAlgebra
@@ -41,20 +40,37 @@ function partitionTrainTest(data::DataFrame, at = 0.75)
 end
 
 ### Define a function to format the input data for the model
-function Input_format(input_data)
+function Input_format(input_data, yearly::Bool)
     input_DataX = []
     input_DataY = []
-    for seasons in 1:size(input_data)[1]-batch_size
-        append!(
-            input_DataX,
-            [input_data[seasons] ; input_data[seasons+1] ; input_data[seasons+2] ; input_data[seasons+3]]
-        )
-        append!(
-            input_DataY,
-            input_data[seasons+3]
-        )
+    if yearly
+        @info("Formatting yearly data")
+        batch_size = 4
+        for seasons in 1:size(input_data)[1]-batch_size
+            append!(
+                input_DataX,
+                [input_data[seasons] ; input_data[seasons+1] ; input_data[seasons+2] ; input_data[seasons+3]]
+            )
+            append!(
+                input_DataY,
+                input_data[seasons+3]
+            )
+        end
+    else
+        @info("Formatting seasonnal data")
+        batch_size = 1
+        for seasons in 1:size(input_data)[1]-batch_size
+            append!(
+                input_DataX,
+                input_data[seasons]
+            )
+            append!(
+                input_DataY,
+                input_data[seasons+1]
+            )
+        end
     end
-    input_DataX = reshape(input_DataX, in_features, size(input_data)[1]-batch_size)
+    input_DataX = reshape(input_DataX, in_features*batch_size, size(input_data)[1]-batch_size)
     input_DataY = reshape(input_DataY, out_features, size(input_data)[1]-batch_size)
     input_DataX, input_DataY
 end
@@ -62,14 +78,19 @@ end
 ### Model V7
 function VIVALDAI_model(
     dataset::DataFrame,
-    epoch_number::Int
-)
+    epoch_number::Int,
+    yearly::Bool)
+
     #Reduce precision to imrpove computation time
     dataset = convert.(Int16,dataset)
 
     train_data, test_data = partitionTrainTest(dataset)
 
-    batch_size = 4 #4 seasons
+    if yearly
+        batch_size = 4
+    else
+        batch_size = 1
+    end
 
     in_features = ncol(dataset) * batch_size #Flattened vector of 38 species over 4 seasons
 
@@ -81,11 +102,11 @@ function VIVALDAI_model(
     test_data = Matrix(test_data)
     test_data = [test_data[season,:] for season in 1:size(test_data)[1]]
 
-    X_dataTrain, Y_dataTrain = Input_format(train_data)
+    X_dataTrain, Y_dataTrain = Input_format(train_data, yearly)
     X_dataTrain = convert.(Int16, X_dataTrain)
     Y_dataTrain = convert.(Int16, Y_dataTrain)
 
-    X_dataTest, Y_dataTest = Input_format(test_data)
+    X_dataTest, Y_dataTest = Input_format(test_data, yearly)
     X_dataTest = convert.(Int16, X_dataTest)
     Y_dataTest = convert.(Int16, Y_dataTest)
 
@@ -94,7 +115,7 @@ function VIVALDAI_model(
     rename!(Y_dataTest, names(dataset))
 
 
-    data_train = Flux.Data.DataLoader((X_dataTrain, Y_dataTrain))
+    data_train = Flux.Data.DataLoader((X_dataTrain, Y_dataTrain), batchsize = 1, buffer = true)
 
     ## Model architecture
     Nnrns = 100 #Number of neurons in the hidden layer
@@ -103,7 +124,6 @@ function VIVALDAI_model(
         LSTM(in_features, Nnrns),
         LSTM(Nnrns, Nnrns),
         Dense(Nnrns, out_features, relu),
-        Dense(out_features, out_features, relu)
     )
 
     # Define a loss function(here: mean squared error)
@@ -127,7 +147,7 @@ function VIVALDAI_model(
             data_train, #training data
             opt # Optimiser
         )
-        # append!(trainingloss, loss(model_out, true_value)) # Compute loss on the first data
+        append!(trainingloss, loss(X1, Y1)) # Compute loss on the first data
     end
     @info("Training ended")
     # plot(trainingloss)
