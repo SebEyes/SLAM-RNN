@@ -75,6 +75,20 @@ function Input_format(input_data, yearly::Bool, out_features = 38)
     input_DataX, input_DataY
 end
 
+### Accuracy computation
+function Accuracy(model_data, real_data)
+    scalar_product = dot(real_data, model_data)
+
+    cos_angle = (scalar_product / (norm(real_data) * norm(model_data)))
+
+    accuracy = cos_angle * (1-((abs(norm(model_data) - norm(real_data)))/((norm(model_data) + norm(real_data)))))
+    
+    if isnan(accuracy)
+        accuracy = 0
+    end
+    accuracy
+end
+
 ### Model V7
 function VIVALDAI_model(
     dataset::DataFrame,
@@ -121,22 +135,21 @@ function VIVALDAI_model(
     Nnrns = 100 #Number of neurons in the hidden layer
     
     model = Chain(
-        LSTM(in_features, Nnrns),
-        LSTM(Nnrns, Nnrns),
-        LSTM(Nnrns => 50),
-        Dense(50 => 50, relu),
-        Dense(50, out_features, relu)
+        GRU(in_features, Nnrns),
+        GRU(Nnrns, Nnrns),
+        Dense(Nnrns,Nnrns, relu),
+        Dense(Nnrns, out_features, relu)
     )
 
     # Define a loss function(here: mean squared error)
-    loss(x, y) = Flux.msle(model(x),y)
+    loss(x, y) = 1-Accuracy(model(x),y)
 
     # Keep track of parameters for update
     ps = Flux.params(model);
     trainingloss = [];
 
-    # Choose an optimizer
-    opt = Flux.ADAM()
+    # Choose an optimizer (Classic Gradient descent)
+    opt = Flux.Descent()
 
     # Training
     @info("Beginning training loop for $(epoch_number) epochs")
@@ -150,21 +163,19 @@ function VIVALDAI_model(
             opt # Optimiser
         )
         append!(trainingloss, loss(X1, Y1)) # Compute loss on the first data
+        if loss(X1, Y1) < 0.20
+            break
+        end
     end
     @info("Training ended")
-    # plot(trainingloss)
+    # using Plots
+    # plot(abs.(trainingloss.-1))
 
     ### output
-    Xdata = [X_dataTrain X_dataTest]
+    Xdata = [train_data; test_data]
 
-    prediction = []
-    for four_seasons in 1:size(Xdata)[2]
-        # println(value)
-        year_data = Xdata[:,four_seasons]
-        append!(prediction, model(year_data))
-    end
-
-    output = reshape(prediction, (out_features, size(Xdata)[2]))
+    prediction = model.(Xdata)
+    output, _ = Input_format(prediction, false)
 
     output = DataFrame(output,:auto)
     output = permutedims(output)
@@ -172,32 +183,16 @@ function VIVALDAI_model(
 
 
     ### Accuracy computation
-    accuracy = []
-    for four_seasons in 1:size(X_dataTest)[2]
-        year_data = X_dataTrain[:,four_seasons]
-        append!(accuracy, model(year_data))
-    end
-
-    accuracy_table = reshape(accuracy, (out_features, size(X_dataTest)[2]))
-
-    accuracy_table = DataFrame(accuracy_table,:auto)
-    accuracy_table = permutedims(accuracy_table)
-    rename!(accuracy_table, names(dataset))
+    accuracy_table = output[27:35,:]
+    Y_dataTest = dataset[28:36,:]
 
 
     accuracy_list = []
     for col in 1:ncol(accuracy_table)
         test_true = convert.(Float64, Y_dataTest[:,col])
         test_model = convert.(Float64, accuracy_table[:,col])
-        scalar_product = dot(test_true, test_model)
 
-        cos_angle = (scalar_product / (norm(test_true) * norm(test_model)))
-
-        accuracy = cos_angle * (1-((abs(norm(test_model) - norm(test_true)))/((norm(test_model) + norm(test_true)))))
-        
-        if isnan(accuracy)
-            accuracy = 0
-        end
+        accuracy = Accuracy(test_model, test_true)
 
         append!(
             accuracy_list,
@@ -213,13 +208,20 @@ function VIVALDAI_model(
     model, output, accuracy_result, mean(accuracy_result.model_accuracy[1:38,:]), trainingloss
 end
 
-model, output, accuracy_result, mean_accuracy, trainingloss = VIVALDAI_model(
-    select(diversity_data, Not(:time_step)), 
-    100_000, 
-    false
-)
-using BSON
+# # Testing the model
 
-BSON.@save "data/results_scenario/S0[best_model_selection]/model_V7_VIVALDAI.bson" model
-CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_output.csv", output)
-CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_speciesAcc.csv", accuracy_result)
+# dataset = select(diversity_data, Not(:time_step))
+
+# model, output, accuracy_result, mean_accuracy, trainingloss = VIVALDAI_model(
+#     dataset, 
+#     100_000, 
+#     false
+# )
+# using BSON
+
+# BSON.@save "data/results_scenario/S0[best_model_selection]/model_V7_VIVALDAI_60.bson" model
+# CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_output.csv", output)
+# CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_speciesAcc.csv", accuracy_result)
+
+# # BSON.@load "data/results_scenario/S0[best_model_selection]/model_V7_VIVALDAI.bson" model
+

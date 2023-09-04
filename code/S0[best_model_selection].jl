@@ -1,5 +1,5 @@
 ### Load model
-include("01_Julia-RNN_model.jl")
+include("01_Julia-RNN_model_V7.jl")
 
 ### Packages
 using BSON
@@ -19,31 +19,26 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
 
     for run in 1:number_runs
         @info("Run number $run/$number_runs")
-        model, output_model, all_accuracy, mean_accuracy, loss_model = forecast_model(
-            diversity_data, 
+        model, output_model, all_accuracy, mean_accuracy, loss_model = VIVALDAI_model(
+            select(diversity_data, Not(:time_step)), 
             epochs,
-            "V6_best",
-            0, #No prediction
-            true, #using sorted data
-            false,
-            0,
-            0 #Use normal splitting of data for training and test
-            )
+            false
+        )
         @info ("Mean Accuracy = $mean_accuracy")
         
 
         if mean_accuracy > maximum(accuracy_model) #if the new model has a better accuracy
         ## Saving model
-            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V6_best.bson" model
+            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V7_best.bson" model
 
             # model_state = Flux.state(model)
             # jldsave("data/results_scenario/S0[best_model_selection]/test_saving.jld2"; model_state)
             
         ## Saving species accuracy
-            CSV.write("data/results_scenario/S0[best_model_selection]/modelV6_best_species_accuracy.csv", all_accuracy)
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_best_species_accuracy.csv", all_accuracy)
         
         ## Saving output_model
-            CSV.write("data/results_scenario/S0[best_model_selection]/modelV6_best_output_model.csv", output_model)
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_best_output_model.csv", output_model)
 
             @info ("Saving Model")
         end
@@ -56,6 +51,6 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
         mean_accuracy = accuracy_model
     )
 
-    CSV.write("data/results_scenario/S0[best_model_selection]/modelV6 selection.csv", model_selection)
+    CSV.write("data/results_scenario/S0[best_model_selection]/modelV7 selection.csv", model_selection)
     
 end
