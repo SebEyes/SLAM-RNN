@@ -90,6 +90,28 @@ labs(
     fill = "Model type:"
 )
 
+#####
+## Species accuracy
+#####
+Acc_sp = read.csv(
+    "data/results_scenario/S0[best_model_selection]/modelV7_speciesAcc.csv"
+)
+Acc_sp$rounded = round(Acc_sp$model_accuracy, 3)
+Acc_sp$rounded = Acc_sp$rounded * 100
+
+ggplot(
+    Acc_sp,
+    aes(y = rounded)
+) + geom_histogram(color = "black",
+    bins = 15
+) + labs(
+    y = "Accuracy (%)",
+    x = "Number of species"
+) + geom_boxplot(
+    fill = "darkgreen"
+) 
+
+ggsave("docs/species_accuracy_V7.jpg")
 
 #####
 ## Forecasts model VivaldAI
@@ -199,7 +221,7 @@ plot_time_series <- function(data_plot, show_acc = TRUE, limit_1 = TRUE, limit_2
     if (show_acc) {
        plot_TS = plot_TS +
        facet_wrap(
-            # nrow = length(unique(data_plot$variable)),
+            nrow = length(unique(data_plot$variable)),
             .~label,
             scales= "free_y"
         ) + labs(

@@ -223,5 +223,5 @@ end
 # CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_output.csv", output)
 # CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_speciesAcc.csv", accuracy_result)
 
-# # BSON.@load "data/results_scenario/S0[best_model_selection]/model_V7_VIVALDAI.bson" model
+# # BSON.@load "data/results_scenario/S0[best_model_selection]/model_V7_VIVALDAI_60.bson" model
 
