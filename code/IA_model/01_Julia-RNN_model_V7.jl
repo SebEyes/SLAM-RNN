@@ -209,7 +209,7 @@ function VIVALDAI_model(
     acc_available = accuracy_result[any.(accuracy_result.acc_missing),:]
     mean_acc = mean(acc_available.model_accuracy)
 
-    model, output, select!(accuracy_result, Not(:acc_missing)) mean_acc, trainingloss
+    model, output, select!(accuracy_result, Not(:acc_missing)), mean_acc, trainingloss
 end
 
 # # Testing the model

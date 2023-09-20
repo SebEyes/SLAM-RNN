@@ -9,17 +9,20 @@ require(forecast)
 ## Loading data
 # Real data
 data_abundance = read.csv(
-    "data/Matrix_dominant.csv",
+    "data/diversity_data/Matrix_dominant.csv",
     sep = ";"
 )
 names(data_abundance) = str_replace_all(names(data_abundance), "X", "MF")
 
 # Split train/test dataset
-data_abundance_train = data_abundance[1:26,]
+data_abundance_train = data_abundance[2:26,]
 data_abundance_test = data_abundance[27:36,]
 
-### Looping
-forecast_SARIMA = data.frame("time_step" = data_abundance$time_step) %>% select(-time_step)
+### Loop
+forecast_SARIMA = data.frame(
+    "time_step" = data_abundance[-2,]$time_step
+    ) %>% 
+    select(-time_step)
 
 for (col_number in 1:(ncol(data_abundance_train)-1)) {
     # print(col_number)
@@ -33,10 +36,9 @@ for (col_number in 1:(ncol(data_abundance_train)-1)) {
 
    MF_TS = ts(
     MF_data,
-    start = min(data_abundance_train$time_step),
-    end = max(data_abundance_train$time_step),
-    frequency = 1
+    frequency = 4
     )
+
     ## Find the best SARIMA model
     MF_data_fit = auto.arima(
         y = MF_TS,

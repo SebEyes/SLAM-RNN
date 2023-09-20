@@ -5,93 +5,142 @@ require(dplyr)
 require(ggplot2)
 require(ggrepel)
 require(reshape2)
+require(forcats)
 
 #####
-## Mean accuracy model V6 with 50_000 epochs training (output S0)
+## Compare RMSE SARIMA vs IA
 #####
 
 ## Database
-acc_model = read.csv(
-    "data/results_scenario/S0[best_model_selection]/modelV6 selection.csv"
+RMSE_V7 = read.csv(
+    "data/results_scenario/S0[best_model_selection]/RMSE_V7.csv"
+) %>% rename("RMSE" = "IA_RMSE")
+RMSE_V7$source = "IA"
+
+
+RMSE_SARIMA = read.csv(
+    "data/SARIMA/RMSE_SARIMA.csv"
+) %>% rename("RMSE"= "SARIMA_RMSE")
+RMSE_SARIMA$source = "SARIMA"
+
+## Merge data
+RMSE = rbind(
+    RMSE_V7,
+    RMSE_SARIMA
 )
-# remove run 0
-acc_model = acc_model %>% filter(run > 0)
 
-acc_model$mean_accuracy = acc_model$mean_accuracy * 100
-
-## Boxplot mean accuracy
-BoxPlot_accurracy = ggplot(
-    data = acc_model,
+## Boxplot RMSE
+BoxPlot_RMSE = ggplot(
+    data = RMSE,
     aes(
-        x = "Accuracy model V6",
-        y = mean_accuracy
+        x = source,
+        y = RMSE
     )
 ) + 
-geom_boxplot() +
-scale_y_continuous(limits = c(0,100)) + 
-geom_text_repel(
-    data = subset(acc_model, acc_model$mean_accuracy == max(acc_model$mean_accuracy)),
-    aes(
-        label = paste(
-            "Best model (",
-            round(max(acc_model$mean_accuracy),1),
-            "%)",
-            sep = ""
-            )
-    ),
-    size = 5,
-    box.padding = unit(-7, "lines")
-)+ 
+geom_boxplot() + 
 labs(
-    x = "",
-    y = "Mean accuracy (%)"
+    x = "Source",
+    y = "RMSE"
 ) 
 
-BoxPlot_accurracy
+wilcox.test(RMSE_SARIMA$RMSE, RMSE_V7$RMSE)
+BoxPlot_RMSE
 
-# ggsave(
-#     "docs/Accuracy_Model_V6.jpg",
-#     width = 4,
-#     height = 5,
-#     units = "in"
-# )
 
-## Dispersion statistics
-summary(acc_model$mean_accuracy)
+ggsave(
+    "docs/comparison_modelling_approach/Comp_RMSE.jpg",
+    width = 4,
+    height = 5,
+    units = "in"
+)
 
 #####
-## Comparative accurracy model V6 with 50_000 epochs training (output S1)
+## Comparative forecast SARIMA vs IA
 #####
 
 ### Load data
-# Accuracy tables
-comp_acc = read.csv(
-    "data/results_scenario/S1[temporal_autocorrelation]/comparison_temporal autocorrelation.csv"
+# Output IA
+res_RNN = read.csv(
+    "data/results_scenario/S0[best_model_selection]/modelV7_output.csv"
 )
-comp_acc$mean_accuracy = 100*comp_acc$mean_accuracy
+names(res_RNN) = str_replace_all(names(res_RNN), "X", "MF")
+res_RNN$data_source = "IA"
+res_RNN$type = "model"
+res_RNN$time_step = as.numeric(rownames(res_RNN))+1
+
+# Output SARIMA
+res_SARIMA = read.csv(
+    "data/SARIMA/output_SARIMA.csv",
+    sep = ";"
+)
+res_SARIMA$data_source = "SARIMA"
+res_SARIMA$type = "model"
+res_SARIMA$time_step = as.numeric(rownames(res_SARIMA))+1
+
+# Real data
+real_data = read.csv(
+    "data/diversity_data/Matrix_dominant.csv",
+    sep = ";"
+)
+names(real_data) = str_replace_all(names(real_data), "X", "MF")
+real_data$data_source = "Real data"
+real_data$type = "real_data"
+real_data$time_step = as.numeric(rownames(real_data))
+
+### Merge data
+data_plot = rbind(
+    res_RNN,
+    res_SARIMA,
+    real_data
+)
+
+### Melt data
+data_plot = melt(
+    data_plot,
+    id.vars = c("time_step", "data_source", "type")
+)
+
+## Réordonnancement de data_plot$data_source
+data_plot$data_source <- data_plot$data_source %>%
+  fct_relevel(
+    "Real data", "IA", "SARIMA"
+  )
+
+### Plot
 ggplot(
-    data = comp_acc,
+    data_plot[data_plot$time_step >=26,],
     aes(
-        x = model_name,
-        y = mean_accuracy,
-        fill = model_name
+        x = time_step,
+        y = value,
+        color = data_source
     )
+)+ 
+geom_point() +
+geom_line(aes(group = data_source, linetype = type))+ 
+scale_linetype_manual(values = c("dotted", "solid"))+
+guides(linetype = FALSE) +
+facet_wrap(
+    # nrow = length(unique(data_plot$variable)),
+    .~variable,
+    scales= "free_y"
 ) + 
-scale_y_continuous(
-    limits = c(0, 100)
-)+
-geom_boxplot() +
-theme(
-    axis.text.x = element_blank(),
-    axis.title.x = element_blank()
-)+
+geom_vline(xintercept = 26) +
 labs(
-    y = "Mean accurracy (%)",
-    fill = "Model type:"
+    x = "Season numbers",
+    y = "Species abundance",
+    color = "Modelling approach:"
+) + theme(
+    legend.position = "bottom"
+)
+
+ggsave(
+    "docs/comparison_modelling_approach/Comp_TestData.jpg",
+    width = 20,
+    height = 20
 )
 
 #####
-## Species accuracy
+## Species accuracy (vector based) model VivaldAI
 #####
 Acc_sp = read.csv(
     "data/results_scenario/S0[best_model_selection]/modelV7_speciesAcc.csv"
@@ -330,12 +379,12 @@ SARIMA_fitting = read.csv(
     "data/SARIMA/output_SARIMA.csv",
     sep = ";"
 )
-SARIMA_fitting$time_step = as.numeric(rownames(SARIMA_fitting)) + 8
+SARIMA_fitting$time_step = as.numeric(rownames(SARIMA_fitting)) + 8 + 1
 SARIMA_fitting$data_source = "SARIMA"
 
 # Real data
 real_data = read.csv(
-    "data/Matrix_dominant.csv",
+    "data/diversity_data/Matrix_dominant.csv",
     sep = ";"
 )
 names(real_data) = str_replace_all(names(real_data), "X", "MF")
@@ -409,4 +458,4 @@ plot_TS = ggplot(
             scales= "free_y")
 plot_TS
 
-ggsave("docs/SARIMA.jpg", plot_TS, width = 20, height = 20)
+ggsave("docs/graphs_SARIMA/SARIMA.jpg", plot_TS, width = 20, height = 20)
