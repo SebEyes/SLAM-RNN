@@ -83,9 +83,9 @@ function Accuracy(model_data, real_data)
 
     accuracy = cos_angle * (1-((abs(norm(model_data) - norm(real_data)))/((norm(model_data) + norm(real_data)))))
     
-    if isnan(accuracy)
-        accuracy = 0
-    end
+    # if isnan(accuracy)
+    #     accuracy = missing
+    # end
     accuracy
 end
 
@@ -183,8 +183,8 @@ function VIVALDAI_model(
 
 
     ### Accuracy computation
-    accuracy_table = output[27:35,:]
-    Y_dataTest = dataset[28:36,:]
+    accuracy_table = output[27:35,:] #Model output
+    Y_dataTest = dataset[28:36,:] #Real data
 
 
     accuracy_list = []
@@ -204,8 +204,12 @@ function VIVALDAI_model(
         model_accuracy = accuracy_list,
         MF = names(accuracy_table)
     )
+    accuracy_result.acc_missing = any.(i -> !isnan(i), accuracy_result.model_accuracy)
 
-    model, output, accuracy_result, mean(accuracy_result.model_accuracy[1:38,:]), trainingloss
+    acc_available = accuracy_result[any.(accuracy_result.acc_missing),:]
+    mean_acc = mean(acc_available.model_accuracy)
+
+    model, output, select!(accuracy_result, Not(:acc_missing)) mean_acc, trainingloss
 end
 
 # # Testing the model
