@@ -1,5 +1,5 @@
 ### Load model
-include("01_Julia-RNN_model_V7.jl")
+include("/home/sebastien/Documents/GBA/SLAM-RNN/code/IA_model/01_Julia-RNN_model_V8.jl")
 
 ### Packages
 using BSON
@@ -10,9 +10,11 @@ using BSON
 
 ### Import data
 diversity_data = CSV.File(
-    "data/Matrix_dominant.csv",
+    "data/diversity_data/SLAM_V68/selected/dominant_adult_selected.csv",
     delim = ";"
 ) |> DataFrame
+select!(diversity_data, Not(:step))
+select!(diversity_data, Not(:sampling_period))
 
 function scenario_S0(number_runs::Int64, epochs::Int64)
     accuracy_model = [0.0]
@@ -20,7 +22,7 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
     for run in 1:number_runs
         @info("Run number $run/$number_runs")
         model, output_model, all_accuracy, mean_accuracy, loss_model = VIVALDAI_model(
-            select(diversity_data, Not(:time_step)), 
+            select(diversity_data), 
             epochs,
             false
         )
@@ -29,16 +31,16 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
 
         if mean_accuracy > maximum(accuracy_model) #if the new model has a better accuracy
         ## Saving model
-            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V7_best.bson" model
+            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V8_best.bson" model
 
             # model_state = Flux.state(model)
             # jldsave("data/results_scenario/S0[best_model_selection]/test_saving.jld2"; model_state)
             
         ## Saving species accuracy
-            CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_best_species_accuracy.csv", all_accuracy)
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV8_best_species_accuracy.csv", all_accuracy)
         
         ## Saving output_model
-            CSV.write("data/results_scenario/S0[best_model_selection]/modelV7_best_output_model.csv", output_model)
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV8_best_output_model.csv", output_model)
 
             @info ("Saving Model")
         end
@@ -51,6 +53,6 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
         mean_accuracy = accuracy_model
     )
 
-    CSV.write("data/results_scenario/S0[best_model_selection]/modelV7 selection.csv", model_selection)
+    CSV.write("data/results_scenario/S0[best_model_selection]/modelV8 selection.csv", model_selection)
     
 end

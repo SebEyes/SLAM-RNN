@@ -167,37 +167,39 @@ ggsave("docs/species_accuracy_V7.jpg")
 #####
 
 ### Load data
-# Output model
-res_RNN = read.csv(
-    "data/results_scenario/S0[best_model_selection]/modelV7_output.csv"
-)
-names(res_RNN) = str_remove_all(names(res_RNN), "X")
-res_RNN$data_source = "Model prediction (test data)"
-res_RNN$forecasting = FALSE
-res_RNN$time_step = as.numeric(rownames(res_RNN))+1
-
-# Forecasted data
-forecast = read.csv(
-    "data/forecast best modelV7/forecasted_data.csv"
-)
-names(forecast) = str_remove_all(names(forecast), "X")
-forecast$data_source = "Forecast"
-forecast$forecasting = TRUE
-forecast$time_step = c((max(res_RNN$time_step)+1):(max(res_RNN$time_step)+nrow(forecast)))
-
 # Real data
 real_data = read.csv(
-    "data/Matrix_dominant.csv",
+    "data/diversity_data/SLAM_V68/selected/dominant_adult_selected.csv",
     sep = ";"
 )
 names(real_data) = str_remove_all(names(real_data), "X")
 real_data$data_source = "Real data"
 real_data$forecasting = FALSE
-real_data$time_step = as.numeric(rownames(real_data))
+
+# Output model
+res_RNN = read.csv(
+    "data/results_scenario/S0[best_model_selection]/modelV8_output.csv"
+)
+names(res_RNN) = str_remove_all(names(res_RNN), "X")
+res_RNN$data_source = "Model V8"
+res_RNN$forecasting = FALSE
+start_step = min(real_data$step)+1
+end_step = max(real_data$step)
+res_RNN$step = as.numeric(start_step:end_step)
+
+# Forecasted data
+# forecast = read.csv(
+#     "data/forecast best modelV7/forecasted_data.csv"
+# )
+# names(forecast) = str_remove_all(names(forecast), "X")
+# forecast$data_source = "Forecast"
+# forecast$forecasting = TRUE
+# forecast$time_step = c((max(res_RNN$time_step)+1):(max(res_RNN$time_step)+nrow(forecast)))
+
 
 # Accuracy species
 Acc_sp = read.csv(
-    "data/results_scenario/S0[best_model_selection]/modelV7_speciesAcc.csv"
+    "data/results_scenario/S0[best_model_selection]/modelV8_speciesAcc.csv"
 )
 Acc_sp$rounded = round(Acc_sp$model_accuracy, 3)
 Acc_sp$rounded = Acc_sp$rounded * 100
@@ -212,13 +214,16 @@ Acc_sp$quality[Acc_sp$rounded <= good_limit] = "Good"
 Acc_sp$quality[Acc_sp$rounded <= medium_limit] = "Medium"
 Acc_sp$quality[Acc_sp$rounded <= bad_limit] = "Bad"
 
+# Save step information
+season_number = select(real_data, step, sampling_period)
+real_data = real_data %>% select(-sampling_period)
 
 ### Plot
-data_plot = rbind(res_RNN, real_data, forecast)
+data_plot = rbind(res_RNN, real_data)
 
 data_plot = melt(
     data_plot,
-    id.vars = c("time_step", "data_source", "forecasting")
+    id.vars = c("step", "data_source", "forecasting")
 )
 data_plot = merge(
     data_plot,
@@ -237,9 +242,10 @@ data_plot$label = paste(
     "%)",
     sep = ""
 
-)## Réordonnancement de data_plot$data_source
+)
+## Réordonnancement de data_plot$data_source
 data_plot$data_source <- factor(data_plot$data_source,
-  levels = c("Real data", "Model prediction (test data)", "Forecast")
+  levels = c("Real data", "Model V8")
 )
 
 # Plot function
@@ -247,7 +253,7 @@ plot_time_series <- function(data_plot, show_acc = TRUE, limit_1 = TRUE, limit_2
    plot_TS = ggplot(
     data_plot,
     aes(
-        x = time_step,
+        x = step,
         y = value,
         color = data_source
     )
@@ -260,17 +266,17 @@ plot_time_series <- function(data_plot, show_acc = TRUE, limit_1 = TRUE, limit_2
     )
 
     if (limit_1) {
-       plot_TS = plot_TS + geom_vline(xintercept = 26)
+       plot_TS = plot_TS + geom_vline(xintercept = as.numeric(max(real_data$step)- 10))
     }
 
     if (limit_2) {
-       plot_TS = plot_TS + geom_vline(xintercept = min(forecast$time_step))
+       plot_TS = plot_TS + geom_vline(xintercept = min(forecast$step))
     }
 
     if (show_acc) {
        plot_TS = plot_TS +
        facet_wrap(
-            nrow = length(unique(data_plot$variable)),
+            # nrow = length(unique(data_plot$variable)),
             .~label,
             scales= "free_y"
         ) + labs(
@@ -329,7 +335,7 @@ plot_time_series(
 plot_time_series(
     data_plot, 
     save = TRUE, 
-    file_name = "Model_V7"
+    file_name = "Model_V8"
 )
 
 #Training data model and raw
