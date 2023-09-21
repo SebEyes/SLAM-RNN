@@ -163,13 +163,14 @@ function VIVALDAI_model(
             opt # Optimiser
         )
         append!(trainingloss, loss(X1, Y1)) # Compute loss on the first data
-        if loss(X1, Y1) < 0.20
+        if loss(X1, Y1) < 0.10
+            @info("Low loss, stopping the training loop (loss = $(loss(X1, Y1))) after $(epoch) epochs")
             break
         end
     end
     @info("Training ended")
-    using Plots
-    plot(abs.(trainingloss.-1))
+    # using Plots
+    # plot(abs.(trainingloss.-1))
 
     ### output
     Xdata = [train_data; test_data]

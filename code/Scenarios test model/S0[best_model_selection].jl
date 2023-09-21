@@ -22,8 +22,8 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
     for run in 1:number_runs
         @info("Run number $run/$number_runs")
         model, output_model, all_accuracy, mean_accuracy, loss_model = VIVALDAI_model(
-            select(diversity_data), 
-            epochs,
+            diversity_data, 
+            1_000_000,
             false
         )
         @info ("Mean Accuracy = $mean_accuracy")
