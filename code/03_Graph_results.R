@@ -258,7 +258,7 @@ plot_time_series <- function(data_plot, show_acc = TRUE, limit_1 = TRUE, limit_2
         color = data_source
     )
     ) + 
-    geom_line(aes(group = data_source, linetype= forecasting) )+ guides(linetype = FALSE) +
+    geom_line(aes(group = data_source, linetype= forecasting) )+ guides(linetype = none) +
     geom_point()  + 
     theme(
         legend.position = "bottom",

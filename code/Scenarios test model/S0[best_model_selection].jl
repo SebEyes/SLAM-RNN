@@ -2,7 +2,7 @@
 include("/home/sebastien/Documents/GBA/SLAM-RNN/code/IA_model/01_Julia-RNN_model_V8.jl")
 
 ### Packages
-using BSON
+using BSON, Plots
 
 ####
 ## This script allow to save the model with the best accuracy after trainings of the V6
@@ -31,7 +31,7 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
 
         if mean_accuracy > maximum(accuracy_model) #if the new model has a better accuracy
         ## Saving model
-            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V8_best.bson" model
+            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V8_48%.bson" model
 
             # model_state = Flux.state(model)
             # jldsave("data/results_scenario/S0[best_model_selection]/test_saving.jld2"; model_state)
@@ -41,6 +41,16 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
         
         ## Saving output_model
             CSV.write("data/results_scenario/S0[best_model_selection]/modelV8_best_output_model.csv", output_model)
+        
+        ## Plot Loss
+            plot(loss_model)
+            loss_model = Float32.(loss_model)
+
+            table_loss = DataFrame(
+                value = loss_model
+            )
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV8_best_loss_model.csv", table_loss)
+
 
             @info ("Saving Model")
         end
