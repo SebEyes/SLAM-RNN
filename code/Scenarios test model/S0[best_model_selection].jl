@@ -10,7 +10,7 @@ using BSON, Plots
 
 ### Import data
 diversity_data = CSV.File(
-    "data/diversity_data/SLAM_V68/selected/dominant_adult_selected.csv",
+    "data/diversity_data/SLAM_V69/selected/dominant_adult_selected.csv",
     delim = ";"
 ) |> DataFrame
 select!(diversity_data, Not(:step))
@@ -23,7 +23,7 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
         @info("Run number $run/$number_runs")
         model, output_model, all_accuracy, mean_accuracy, loss_model = VIVALDAI_model(
             diversity_data, 
-            1_000_000,
+            100_000,
             false
         )
         @info ("Mean Accuracy = $mean_accuracy")
@@ -31,16 +31,16 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
 
         if mean_accuracy > maximum(accuracy_model) #if the new model has a better accuracy
         ## Saving model
-            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V8_48%.bson" model
+            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V9_54%.bson" model
 
             # model_state = Flux.state(model)
             # jldsave("data/results_scenario/S0[best_model_selection]/test_saving.jld2"; model_state)
             
         ## Saving species accuracy
-            CSV.write("data/results_scenario/S0[best_model_selection]/modelV8_best_species_accuracy.csv", all_accuracy)
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV9_best_species_accuracy.csv", all_accuracy)
         
         ## Saving output_model
-            CSV.write("data/results_scenario/S0[best_model_selection]/modelV8_best_output_model.csv", output_model)
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV9_best_output_model.csv", output_model)
         
         ## Plot Loss
             plot(loss_model)
@@ -49,7 +49,7 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
             table_loss = DataFrame(
                 value = loss_model
             )
-            CSV.write("data/results_scenario/S0[best_model_selection]/modelV8_best_loss_model.csv", table_loss)
+            CSV.write("data/results_scenario/S0[best_model_selection]/modelV9_best_loss_model.csv", table_loss)
 
 
             @info ("Saving Model")

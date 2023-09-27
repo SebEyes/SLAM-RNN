@@ -169,7 +169,7 @@ ggsave("docs/species_accuracy_V7.jpg")
 ### Load data
 # Real data
 real_data = read.csv(
-    "data/diversity_data/SLAM_V68/selected/dominant_adult_selected.csv",
+    "data/diversity_data/SLAM_V69/selected/dominant_adult_selected.csv",
     sep = ";"
 )
 names(real_data) = str_remove_all(names(real_data), "X")
@@ -178,10 +178,10 @@ real_data$forecasting = FALSE
 
 # Output model
 res_RNN = read.csv(
-    "data/results_scenario/S0[best_model_selection]/modelV8_best_output_model.csv"
+    "data/results_scenario/S0[best_model_selection]/modelV9_best_output_model.csv"
 )
 names(res_RNN) = str_remove_all(names(res_RNN), "X")
-res_RNN$data_source = "Model V8"
+res_RNN$data_source = "Model V9"
 res_RNN$forecasting = FALSE
 start_step = min(real_data$step)+1
 end_step = max(real_data$step)
@@ -199,7 +199,7 @@ res_RNN$step = as.numeric(start_step:end_step)
 
 # Accuracy species
 Acc_sp = read.csv(
-    "data/results_scenario/S0[best_model_selection]/modelV8_best_species_accuracy.csv"
+    "data/results_scenario/S0[best_model_selection]/modelV9_best_species_accuracy.csv"
 )
 Acc_sp$rounded = round(Acc_sp$model_accuracy, 3)
 Acc_sp$rounded = Acc_sp$rounded * 100
@@ -245,7 +245,7 @@ data_plot$label = paste(
 )
 ## Réordonnancement de data_plot$data_source
 data_plot$data_source <- factor(data_plot$data_source,
-  levels = c("Real data", "Model V8")
+  levels = c("Real data", "Model V9")
 )
 
 # Plot function
@@ -258,7 +258,7 @@ plot_time_series <- function(data_plot, show_acc = TRUE, limit_1 = TRUE, limit_2
         color = data_source
     )
     ) + 
-    geom_line(aes(group = data_source, linetype= forecasting) )+ guides(linetype = none) +
+    geom_line(aes(group = data_source, linetype= forecasting) )+ guides(linetype = FALSE) +
     geom_point()  + 
     theme(
         legend.position = "bottom",
@@ -336,7 +336,7 @@ plot_time_series(
     data_plot, 
     save = TRUE,
     limit_2 = FALSE,
-    file_name = "Model_V8"
+    file_name = "Model_V9-60%"
 )
 
 #Training data model and raw

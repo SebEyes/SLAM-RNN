@@ -40,7 +40,7 @@ function partitionTrainTest(data::DataFrame, at = 0.75)
 end
 
 ### Define a function to format the input data for the model
-function Input_format(input_data, yearly::Bool, out_features = 42)
+function Input_format(input_data, yearly::Bool, out_features = 39)
     input_DataX = []
     input_DataY = []
     if yearly
@@ -106,7 +106,7 @@ function VIVALDAI_model(
         batch_size = 1
     end
 
-    in_features = ncol(dataset) * batch_size #Flattened vector of 42 species over 4 seasons
+    in_features = ncol(dataset) * batch_size #Number of seasons
 
     out_features = ncol(dataset) #number of species
 
@@ -163,7 +163,7 @@ function VIVALDAI_model(
             opt # Optimiser
         )
         append!(trainingloss, loss(X1, Y1)) # Compute loss on the first data
-        if loss(X1, Y1) < 0.10
+        if loss(X1, Y1) < 0.0
             @info("Low loss, stopping the training loop (loss = $(loss(X1, Y1))) after $(epoch) epochs")
             break
         end
