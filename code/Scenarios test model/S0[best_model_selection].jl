@@ -23,7 +23,7 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
         @info("Run number $run/$number_runs")
         model, output_model, all_accuracy, mean_accuracy, loss_model = VIVALDAI_model(
             diversity_data, 
-            100_000,
+            epochs,
             false
         )
         @info ("Mean Accuracy = $mean_accuracy")
@@ -63,6 +63,6 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
         mean_accuracy = accuracy_model
     )
 
-    CSV.write("data/results_scenario/S0[best_model_selection]/modelV8 selection.csv", model_selection)
+    CSV.write("data/results_scenario/S0[best_model_selection]/modelV9 selection.csv", model_selection)
     
 end
