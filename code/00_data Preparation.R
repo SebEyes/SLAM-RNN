@@ -6,8 +6,8 @@ require(reshape2)
 
 ### Loading SLAM database
 SLAM_rawDB = read.csv(
-    "data/diversity_data/SLAM_V68-2023_07_20.csv",
-    sep = ";",
+    "data/diversity_data/SLAM_V69/SLAM_V69-2023_09_25.csv",
+    sep = ",",
     dec = ","
 )
 
@@ -25,6 +25,7 @@ SLAM_TER = SLAM_rawDB[str_detect(SLAM_rawDB$Event_ID, "TER"),]
 SLAM_TER = SLAM_TER %>% filter(order != "Lepidoptera")
 
 ## Remove Aphid MF1230
+SLAM_TER = SLAM_TER %>% filter(MF != "1230")
 
 ## Remove NPI
 SLAM_TER = SLAM_TER %>% filter(MF != "NPI")
@@ -57,7 +58,7 @@ SLAM_TER = SLAM_TER %>%
         Total_Abundance_90 = sum(Total_Abundance_90),
         Total_Abundance_Adult_90 = sum(Total_Abundance_Adult_90),
         scientificName
-    )
+    ) %>% ungroup() %>% unique()
 
 # List sites available
 SLAM_TER_sites = SLAM_TER %>%
@@ -67,7 +68,7 @@ SLAM_TER_sites = SLAM_TER %>%
 SLAM_TER_sites = separate(
     data = SLAM_TER_sites,
     col = "Event_ID",
-    into = c("site_codes","drop"),
+    into = c("site_codes"),
     sep = "_",
     extra = "drop"
 ) %>% unique()
@@ -108,7 +109,7 @@ SLAM_TER = SLAM_TER[SLAM_TER$site_codes %in% SLAM_TER_sites$site_codes,]
 Date_TER = separate(
     data = Date_database,
     col = "Event_ID",
-    into = c("site_codes","drop"),
+    into = c("site_codes"),
     sep = "_",
     extra = "drop",
     remove = F
@@ -118,9 +119,22 @@ Date_TER = Date_TER[Date_TER$site_codes %in% unique(SLAM_TER$site_codes),]
 
 
 ## Add date information
+# filter Samples between 70 and 110 days
+Date_TER$nb_days = as.numeric(Date_TER$Sampling.Date - Date_TER$Placement)
+Date_TER = Date_TER[Date_TER$nb_days %in% c(70:110),]
+
+## Checking Sample availability
+Note_SLAM_TER = unique(Date_TER$Notes)
+Date_TER = Date_TER %>% filter(is.na(Notes))
+
 # Check Event_ID
-Event_SLAM_DB = SLAM_TER$Event_ID %>% unique()
-Event_Date_DB = Date_TER$Event_ID %>% unique()
+Event_SLAM_DB = SLAM_TER %>% 
+    select(Event_ID,site_codes) %>%
+    unique()
+
+Event_Date_DB = Date_TER %>% 
+    select(Event_ID,site_codes) %>%
+    unique()
 
 PB_Event = Event_Date_DB[!(Event_Date_DB %in% Event_SLAM_DB)]
 PB_Event = Date_database[Date_database$Event_ID %in% PB_Event,]
@@ -130,22 +144,12 @@ SLAM_TER = merge(
     select(
         Date_TER,
         Event_ID,
-        Placement,
-        Sampling.Date,
-        Notes,
         Season,
         Year
     ),
     by = "Event_ID"
 ) %>% arrange(Event_ID, MF)
 
-# filter Samples between 70 and 110 days
-SLAM_TER$nb_days = as.numeric(SLAM_TER$Sampling.Date - SLAM_TER$Placement)
-SLAM_TER = SLAM_TER[SLAM_TER$nb_days %in% c(70:110),]
-
-## Checking Sample availability
-Note_SLAM_TER = unique(SLAM_TER$Notes)
-SLAM_TER = SLAM_TER %>% filter(is.na(Notes))
 
 ## Checking number of samples available per seasons and years
 data_available = SLAM_TER %>% select(site_codes, Year, Season) %>% unique()
@@ -203,10 +207,10 @@ Mat_com = merge(
 # Time step available
 time_step_available = sort(unique(Mat_com$step))
 
-# Continuous time series between Summer 2013 (Time step 7) and Winter 2023 (time step 45)
+# Continuous time series between Summer 2013 (Time step 7) and Spring 2023 (time step 46)
 Season_available = time_step[time_step$step %in% time_step_available,]
-Mat_com = Mat_com %>% filter(step %in% c(7:45))
-Season_available = Season_available %>% filter(step %in% c(7:45))
+Mat_com = Mat_com %>% filter(step %in% c(7:46))
+Season_available = Season_available %>% filter(step %in% c(7:46))
 Season_available$sampling_period = paste(
     Season_available$Season,
     Season_available$Year,
