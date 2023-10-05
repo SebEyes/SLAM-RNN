@@ -178,7 +178,7 @@ real_data$forecasting = FALSE
 
 # Output model
 res_RNN = read.csv(
-    "data/results_scenario/S0[best_model_selection]/modelV9_best_output_model.csv"
+    "data/results_scenario/S0[best_model_selection]/V9/Acc_50/modelV9_best_output_model.csv"
 )
 names(res_RNN) = str_remove_all(names(res_RNN), "X")
 res_RNN$data_source = "Model V9"
@@ -199,7 +199,7 @@ res_RNN$step = as.numeric(start_step:end_step)
 
 # Accuracy species
 Acc_sp = read.csv(
-    "data/results_scenario/S0[best_model_selection]/modelV9_best_species_accuracy.csv"
+    "data/results_scenario/S0[best_model_selection]/V9/Acc_50/modelV9_best_species_accuracy.csv"
 )
 Acc_sp$rounded = round(Acc_sp$model_accuracy, 3)
 Acc_sp$rounded = Acc_sp$rounded * 100
@@ -336,7 +336,7 @@ plot_time_series(
     data_plot, 
     save = TRUE,
     limit_2 = FALSE,
-    file_name = "Model_V9-60%"
+    file_name = "Model_V9-50"
 )
 
 #Training data model and raw
