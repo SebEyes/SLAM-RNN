@@ -2,17 +2,16 @@ using CSV, DataFrames
 
 ## Load test dataset
 diversity_data = CSV.File(
-    "data/diversity_data/Matrix_dominant.csv",
+    "data/diversity_data/SLAM_V69/selected/dominant_adult_selected.csv",
     delim = ";"
-) |> DataFrame  
-diversity_data = diversity_data[27:36,:]
-select!(diversity_data, Not(:time_step))
-
-## Load forecasted data
-forecasted_data = CSV.File(
-    "data/results_scenario/S0[best_model_selection]/modelV7_output.csv",
 ) |> DataFrame
-forecasted_data = forecasted_data[26:35,:] 
+select!(diversity_data, Not([:sampling_period, :step]))
+diversity_data = diversity_data[2:40,:] #remove first data, not included in RNN output
+
+## Load RNN data
+forecasted_data = CSV.File(
+    "data/results_scenario/S0[best_model_selection]/V9/Acc_50/modelV9_best_output_model.csv",
+) |> DataFrame
 
 ### Assessing Accuracy (RMSE)
 accuracy_list = []
@@ -35,4 +34,4 @@ accuracy_result = DataFrame(
 )
 
 
-CSV.write("data/results_scenario/S0[best_model_selection]/RMSE_V7.csv", accuracy_result)
+CSV.write("data/results_scenario/S0[best_model_selection]/RMSE_V9.csv", accuracy_result)

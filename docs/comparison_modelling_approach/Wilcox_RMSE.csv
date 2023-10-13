@@ -1,0 +1,4 @@
+".y.";"group1";"group2";"n1";"n2";"statistic";"p";"p.adj";"p.adj.signif"
+"RMSE";"IA";"LOESS";39;39;388;0.000142;0.000426;"***"
+"RMSE";"IA";"SARIMA";39;39;480;0.005;0.009;"**"
+"RMSE";"LOESS";"SARIMA";39;39;904;0.154;0.154;"ns"
