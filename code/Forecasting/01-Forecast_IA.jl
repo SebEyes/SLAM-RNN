@@ -6,7 +6,7 @@ using LinearAlgebra
 include("01_Julia-RNN_model_V7.jl")
 
 ## Load model architecture
-BSON.@load "data/results_scenario/S0[best_model_selection]/model_V7_VIVALDAI_60.bson" model
+BSON.@load "data/results_scenario/S0[best_model_selection]/V9/Acc_50/output_V9_50.bson" model
 
 ## Load training dataset
 diversity_data = CSV.File(

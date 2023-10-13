@@ -9,22 +9,24 @@ require(forecast)
 ## Loading data
 # Real data
 data_abundance = read.csv(
-    "data/diversity_data/Matrix_dominant.csv",
+    "data/diversity_data/SLAM_V69/selected/dominant_adult_selected.csv",
     sep = ";"
 )
-names(data_abundance) = str_replace_all(names(data_abundance), "X", "MF")
+# Keep tracking time information
+time_info = select(data_abundance, step, sampling_period)
+data_abundance = data_abundance %>% select(-sampling_period)
 
 # Split train/test dataset
-data_abundance_train = data_abundance[2:26,]
-data_abundance_test = data_abundance[27:36,]
+data_abundance_train = data_abundance[1:30,]
+data_abundance_test = data_abundance[31:40,]
 
 ### Loop
 forecast_SARIMA = data.frame(
-    "time_step" = data_abundance[-2,]$time_step
+    "step" = data_abundance$step
     ) %>% 
-    select(-time_step)
+    select(step)
 
-for (col_number in 1:(ncol(data_abundance_train)-1)) {
+system.time(for (col_number in 2:(ncol(data_abundance_train))) {
     # print(col_number)
     print(
         names(data_abundance_train)[col_number]
@@ -60,10 +62,10 @@ for (col_number in 1:(ncol(data_abundance_train)-1)) {
     # SARIMA full
     SARIMA_data = append(MF_fitted, MF_forecast$mean)
     forecast_SARIMA = cbind(forecast_SARIMA, SARIMA_data)
-}
+})
 
-names(forecast_SARIMA) = names(data_abundance_train)[1:(ncol(data_abundance_train)-1)]
-# forecast_SARIMA[forecast_SARIMA < 0] = 0
+names(forecast_SARIMA) = names(data_abundance_train)
+forecast_SARIMA[forecast_SARIMA < 0] = 0
 
 
 

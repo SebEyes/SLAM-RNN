@@ -386,22 +386,20 @@ SARIMA_fitting = read.csv(
     "data/SARIMA/output_SARIMA.csv",
     sep = ";"
 )
-SARIMA_fitting$time_step = as.numeric(rownames(SARIMA_fitting)) + 8 + 1
 SARIMA_fitting$data_source = "SARIMA"
 
 # Real data
 real_data = read.csv(
-    "data/diversity_data/Matrix_dominant.csv",
+    "data/diversity_data/SLAM_V69/selected/dominant_adult_selected.csv",
     sep = ";"
 )
-names(real_data) = str_replace_all(names(real_data), "X", "MF")
 real_data$data_source = "Real data"
+real_data = select(real_data, -sampling_period)
 
 # Accuracy species
 Acc_sp = read.csv(
     "data/SARIMA/accuracy_SARIMA.csv"
 )
-Acc_sp$MF = paste("MF", Acc_sp$MF, sep = "")
 Acc_sp$rounded = round(Acc_sp$SARIMA_accuracy, 3)
 Acc_sp$rounded = Acc_sp$rounded * 100
 
@@ -421,7 +419,7 @@ data_plot = rbind(SARIMA_fitting, real_data)
 
 data_plot = melt(
     data_plot,
-    id.vars = c("time_step", "data_source")
+    id.vars = c("step", "data_source")
 )
 data_plot = merge(
     data_plot,
@@ -449,7 +447,7 @@ data_plot$data_source <- factor(data_plot$data_source,
 plot_TS = ggplot(
     data_plot,
     aes(
-        x = time_step,
+        x = step,
         y = value,
         color = data_source
     )
@@ -466,3 +464,93 @@ plot_TS = ggplot(
 plot_TS
 
 ggsave("docs/graphs_SARIMA/SARIMA.jpg", plot_TS, width = 20, height = 20)
+
+
+#####
+## Forecasts LOESS
+#####
+
+### Load data
+# Output LOESS
+LOESS_fitting = read.csv(
+    "data/LOESS/output_LOESS.csv",
+    sep = ";"
+)
+LOESS_fitting$data_source = "LOESS"
+
+# Real data
+real_data = read.csv(
+    "data/diversity_data/SLAM_V69/selected/dominant_adult_selected.csv",
+    sep = ";"
+)
+real_data$data_source = "Real data"
+real_data = select(real_data, -sampling_period)
+
+# Accuracy species
+Acc_sp = read.csv(
+    "data/LOESS/accuracy_LOESS.csv"
+)
+Acc_sp$rounded = round(Acc_sp$LOESS_accuracy, 3)
+Acc_sp$rounded = Acc_sp$rounded * 100
+
+# Classifying quality
+bad_limit = as.numeric(summary(Acc_sp$rounded)[2]) #1st quartile
+medium_limit = as.numeric(summary(Acc_sp$rounded)[3]) #median
+good_limit = as.numeric(summary(Acc_sp$rounded)[5]) #3rd quartile
+
+Acc_sp$quality = "Excellent"
+Acc_sp$quality[Acc_sp$rounded <= good_limit] = "Good"
+Acc_sp$quality[Acc_sp$rounded <= medium_limit] = "Medium"
+Acc_sp$quality[Acc_sp$rounded <= bad_limit] = "Bad"
+
+
+### Plot
+data_plot = rbind(LOESS_fitting, real_data)
+
+data_plot = melt(
+    data_plot,
+    id.vars = c("step", "data_source")
+)
+data_plot = merge(
+    data_plot,
+    select(
+        Acc_sp,
+        MF, rounded, quality
+    ),
+    by.x = "variable",
+    by.y = "MF"
+)
+
+data_plot$label = paste(
+    data_plot$variable,
+    " (",
+    data_plot$rounded,
+    "%)",
+    sep = ""
+
+)## Réordonnancement de data_plot$data_source
+data_plot$data_source <- factor(data_plot$data_source,
+  levels = c("Real data", "LOESS")
+)
+
+# Plot function
+plot_TS = ggplot(
+    data_plot,
+    aes(
+        x = step,
+        y = value,
+        color = data_source
+    )
+    ) + 
+    geom_line(aes(group = data_source, linetype= data_source) )+ guides(linetype = FALSE) +
+    geom_point()  + 
+    theme(
+        legend.position = "bottom",
+        legend.box = "vertical"
+    ) + geom_vline(xintercept = 26 + 9) +
+       facet_wrap(
+            .~label,
+            scales= "free_y")
+plot_TS
+
+ggsave("docs/graphs_LOESS/LOESS.jpg", plot_TS, width = 20, height = 20)
