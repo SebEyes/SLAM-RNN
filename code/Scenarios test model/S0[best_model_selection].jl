@@ -31,7 +31,7 @@ function scenario_S0(number_runs::Int64, epochs::Int64)
 
         if mean_accuracy > maximum(accuracy_model) #if the new model has a better accuracy
         ## Saving model
-            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V9_54%.bson" model
+            BSON.@save "data/results_scenario/S0[best_model_selection]/output_V9.bson" model
 
             # model_state = Flux.state(model)
             # jldsave("data/results_scenario/S0[best_model_selection]/test_saving.jld2"; model_state)
