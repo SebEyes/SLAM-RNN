@@ -1,4 +1,4 @@
-using CSV, DataFrames
+using CSV, DataFrames, StatsBase
 
 ## Load test dataset
 diversity_data = CSV.File(
@@ -10,7 +10,7 @@ diversity_data = diversity_data[2:40,:] #remove first data, not included in RNN 
 
 ## Load RNN data
 forecasted_data = CSV.File(
-    "data/results_scenario/S0[best_model_selection]/V9/Acc_50/modelV9_best_output_model.csv",
+    "data/results_scenario/S0[best_model_selection]/V9/Acc_60/modelV9_best_output_model.csv",
 ) |> DataFrame
 
 ### Assessing Accuracy (RMSE)

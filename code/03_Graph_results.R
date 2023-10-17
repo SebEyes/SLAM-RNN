@@ -6,6 +6,8 @@ require(ggplot2)
 require(ggrepel)
 require(reshape2)
 require(forcats)
+require(ggthemes)
+require(ggtext)
 
 
 #####
@@ -47,7 +49,7 @@ real_data$forecasting = FALSE
 
 # Output model
 res_RNN = read.csv(
-    "data/results_scenario/S0[best_model_selection]/V9/Acc_50/modelV9_best_output_model.csv"
+    "data/results_scenario/S0[best_model_selection]/V9/Acc_60/modelV9_best_output_model.csv"
 )
 names(res_RNN) = str_remove_all(names(res_RNN), "X")
 res_RNN$data_source = "Model V9"
@@ -65,10 +67,41 @@ res_RNN$step = as.numeric(start_step:end_step)
 # forecast$forecasting = TRUE
 # forecast$time_step = c((max(res_RNN$time_step)+1):(max(res_RNN$time_step)+nrow(forecast)))
 
+# MF list
+MF_list = read.csv(
+    "data/diversity_data/SuppS2_MF_Info.csv",
+    sep = ";"
+)
+MF_list$MF = paste("MF", MF_list$MF, sep = "")
+MF_name = select(
+    MF_list,
+    MF,
+    genus,
+    specificEpithet,
+    infraspecificEpithet,
+    scientificNameAuthorship,
+    scientificName
+)
+
+MF_name$scientificName = paste(
+    "*",
+    MF_name$genus,
+    " ",
+    MF_name$specificEpithet,
+    " ",
+    MF_name$infraspecificEpithet,
+    "*<br>",
+    MF_name$scientificNameAuthorship,
+    sep = ""
+)
+MF_name$scientificName = str_remove_all(
+    MF_name$scientificName,
+    " NA*"
+)
 
 # Accuracy species
 Acc_sp = read.csv(
-    "data/results_scenario/S0[best_model_selection]/V9/Acc_50/modelV9_best_species_accuracy.csv"
+    "data/results_scenario/S0[best_model_selection]/V9/Acc_60/modelV9_best_species_accuracy.csv"
 )
 Acc_sp$rounded = round(Acc_sp$model_accuracy, 3)
 Acc_sp$rounded = Acc_sp$rounded * 100
@@ -82,6 +115,7 @@ Acc_sp$quality = "Excellent"
 Acc_sp$quality[Acc_sp$rounded <= good_limit] = "Good"
 Acc_sp$quality[Acc_sp$rounded <= medium_limit] = "Medium"
 Acc_sp$quality[Acc_sp$rounded <= bad_limit] = "Bad"
+
 
 # Save step information
 season_number = select(real_data, step, sampling_period)
@@ -103,15 +137,25 @@ data_plot = merge(
     by.x = "variable",
     by.y = "MF"
 )
+data_plot = merge(
+    data_plot,
+    MF_name,
+    by.x = "variable",
+    by.y = "MF"
+)
+
 
 data_plot$label = paste(
-    data_plot$variable,
-    " (",
+    data_plot$scientificName,
+    "<br>**",
     data_plot$rounded,
-    "%)",
+    " %**",
     sep = ""
-
 )
+
+data_plot$label = str_replace_all(data_plot$label, "NaN %", "No fitting")
+# data_plot$label = factor(data_plot$label,ordered = is.ordered(data_plot$rounded))
+
 ## Réordonnancement de data_plot$data_source
 data_plot$data_source <- factor(data_plot$data_source,
   levels = c("Real data", "Model V9")
@@ -132,6 +176,8 @@ plot_time_series <- function(data_plot, show_acc = TRUE, limit_1 = TRUE, limit_2
     theme(
         legend.position = "bottom",
         legend.box = "vertical"
+    ) + theme_stata(
+        base_size = 11
     )
 
     if (limit_1) {
@@ -146,19 +192,23 @@ plot_time_series <- function(data_plot, show_acc = TRUE, limit_1 = TRUE, limit_2
        plot_TS = plot_TS +
        facet_wrap(
             # nrow = length(unique(data_plot$variable)),
-            .~label,
-            scales= "free_y"
+            .~ label,
+            scales= "free_y",
+            ncol = 4
         ) + labs(
-            x = "Seasons",
-            y = "Abundance",
+            x = "Seasons number",
+            y = "Adult abundance",
             color = "Data source:"
+        ) + theme(
+            strip.text.x = ggtext::element_markdown(angle = 0),
+            strip.background.x = element_rect(color = "black")
         )
     }else {
        plot_TS = plot_TS +
        facet_wrap(
             # nrow = length(unique(data_plot$variable)),
             .~variable,
-            scales= "free_y"
+            scales = "free_y"
         ) + labs(
             x = "Seasons",
             y = "Abundance",
@@ -180,6 +230,15 @@ plot_time_series <- function(data_plot, show_acc = TRUE, limit_1 = TRUE, limit_2
     }
 }
 
+
+#Full time series (raw results)
+plot_time_series(
+    data_plot, 
+    save = TRUE,
+    limit_2 = FALSE,
+    file_name = "Model_V9-60"
+)
+
 #Raw data Train
 plot_time_series(
     subset(data_plot, data_source == "Real data" & time_step < 27),
@@ -198,14 +257,6 @@ plot_time_series(
     file_name = "Data_TimeSeries_TrainTest",
     limit_1 = TRUE,
     limit_2 = FALSE
-)
-
-#Full time series (raw results)
-plot_time_series(
-    data_plot, 
-    save = TRUE,
-    limit_2 = FALSE,
-    file_name = "Model_V9-50"
 )
 
 #Training data model and raw

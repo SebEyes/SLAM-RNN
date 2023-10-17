@@ -1,0 +1,4 @@
+LOESS : #3498db
+RNN : #e67e22
+SARIMA : #9b59b6
+REAL DATA : #1abc9c
