@@ -6,7 +6,7 @@ using CSV, DataFrames
 prediction = 4*10 #10 next years
 
 ## Load Model
-BSON.@load "data/results_scenario/S0[best_model_selection]/V9/Acc_50/output_V9_50.bson" model
+BSON.@load "data/results_scenario/S0[best_model_selection]/V9/Acc_60/output_V9_60.bson" model
 IA_model = model
 
 ## Load training dataset
