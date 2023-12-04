@@ -1,42 +1,49 @@
 ## Package
 using Flux, BSON
 using CSV, DataFrames
-using LinearAlgebra
 
-include("01_Julia-RNN_model_V7.jl")
+## Constants
+prediction = 4*10 #10 next years
 
-## Load model architecture
-BSON.@load "data/results_scenario/S0[best_model_selection]/V9/Acc_50/output_V9_50.bson" model
+## Load Model
+BSON.@load "data/results_scenario/S0[best_model_selection]/V9/Acc_60/output_V9_60.bson" model
+IA_model = model
 
 ## Load training dataset
 diversity_data = CSV.File(
-    "data/Matrix_dominant.csv",
+    "data/diversity_data/SLAM_V69/selected/dominant_adult_selected.csv",
     delim = ";"
-) |> DataFrame  
-diversity_data = select(diversity_data, Not(:time_step))
-
-last_season_number = size(diversity_data)[1]
-last_season = DataFrame(diversity_data[last_season_number,:])
-last_season = Matrix(last_season)
-last_season = permutedims(last_season)
+) |> DataFrame
+# Saving time information
+time_series_step = select(diversity_data, :step, :sampling_period)
+diversity_data = select(diversity_data, Not([:step, :sampling_period]))
+## Collect MF list
+MF_list = names(diversity_data)
 
 
 ####
 ## Model forecasts
 ####
-number_prediction = 10 #Forecast the next 8 seasons
-prediction = [model(last_season)]
+## Collect last known status of the assemblage
+last_true_status = last(diversity_data) |> DataFrame
+last_true_status = permutedims(last_true_status)
+last_true_status = vec(Array(last_true_status))
+last_true_status = Float32.(last_true_status)
 
-for season in 1:number_prediction
-    @info("Prediction number $season")
-    append!(prediction, [model(last(prediction))])
+last_status = last_true_status
+
+forecasts = []
+append!(forecasts, last_status)
+
+
+for future in 2:prediction
+    # @info("Predicting season $future up to $prediction")
+    last_status = Float32.(IA_model(last_status))
+
+    append!(forecasts, last_status)
 end
 
-output, _ = Input_format(prediction, false)
+forecasts = permutedims(reshape(forecasts, size(MF_list)[1], prediction))
+forecasts = DataFrame(forecasts, MF_list)
 
-output = DataFrame(output,:auto)
-output = permutedims(output)
-rename!(output, names(diversity_data))
-
-
-CSV.write("data/forecast best modelV7/forecasted_data.csv", output)
+CSV.write("data/forecast best modelV9/forecasted_data.csv", forecasts)

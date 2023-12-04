@@ -270,4 +270,3 @@ ggsave("docs/graphs_extinction/extinction.jpg",
     width = 20,
     height = 40
 )
-

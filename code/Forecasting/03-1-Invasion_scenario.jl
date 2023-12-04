@@ -19,11 +19,6 @@ diversity_data = CSV.File(
 time_series_step = select(diversity_data, :step, :sampling_period)
 diversity_data = select(diversity_data, Not([:step, :sampling_period]))
 
-## Collect last known status of the assemblage
-last_true_status = last(diversity_data) |> DataFrame
-last_true_status = permutedims(last_true_status)
-last_true_status = vec(Array(last_true_status))
-
 ## Collect MF list
 MF_list = names(diversity_data)
 
@@ -52,24 +47,32 @@ for exo_MF in 1:size(MF_list)[1]
         @info("$exo_MF_verbatim is exotic!")
         @info("$exo_MF_verbatim invades!")
 
-        # Initialise extinction
-        last_status = last_true_status
-        if last_status[exo_MF] == 0
-            last_status[exo_MF] = 1
+        ## Collect last known status of the assemblage
+        last_status = last(diversity_data) |> DataFrame
+        
+        # Initialise invasion
+        if last_status[!,exo_MF] == 0
+            last_status[!,exo_MF] = 1
         end
-        last_status[exo_MF] = last_status[exo_MF]*10
+        last_status[!,exo_MF] = last_status[!,exo_MF]*10
+
+        last_status = permutedims(last_status)
+        last_status = vec(Array(last_status))
+        last_status = Float32.(last_status)
 
         forecasts = []
+        append!(forecasts, last_status)
+        forecasts = Float32.(forecasts)
 
         for future in 1:prediction
             @info("Predicting season $future up to $prediction")
-            last_status = IA_model(last_status)
-            last_status[exo_MF] = last_status[exo_MF]*10
+            last_status = Float32.(IA_model(last_status))
+            # last_status[exo_MF] = last_status[exo_MF]*10
 
             append!(forecasts, last_status)
         end
 
-        forecasts = permutedims(reshape(forecasts, size(MF_list)[1], prediction))
+        forecasts = permutedims(reshape(forecasts, size(MF_list)[1], prediction+1))
         forecasts = DataFrame(forecasts, MF_list)
 
         file_name = "data/invasion_scenarios/"*exo_MF_verbatim*".csv"
